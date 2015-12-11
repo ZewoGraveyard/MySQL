@@ -23,12 +23,7 @@ class MySQLTests: XCTestCase {
     }
     
     func testExample() {
-        let connection = Connection(
-            Connection.Info(
-                host: "localhost",
-                database: "test"
-            )
-        )
+        let connection = Connection("mysql://localhost/test")
         
         do {
             try connection.open()

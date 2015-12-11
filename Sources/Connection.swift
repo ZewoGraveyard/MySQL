@@ -21,7 +21,7 @@ public class Connection: SQL.Connection {
         case OK
     }
     
-    public class Info: SQL.ConnectionInfo, StringLiteralConvertible {
+    public class Info: SQL.ConnectionInfo, ConnectionStringConvertible {
         
         public struct Flags : OptionSetType {
             public let rawValue: UInt
@@ -67,8 +67,8 @@ public class Connection: SQL.Connection {
             super.init(host: host, database: database, port: port, user: user, password: password)
         }
         
-        public convenience required init(stringLiteral: String) {
-            guard let URL = NSURL(string: stringLiteral) else {
+        public convenience required init(connectionString: String) {
+            guard let URL = NSURL(string: connectionString) else {
                 fatalError("Invalid connection string")
             }
             
@@ -76,7 +76,7 @@ public class Connection: SQL.Connection {
                 fatalError("Missing host in connection string")
             }
             
-            guard let database = URL.path else {
+            guard let database = URL.pathComponents?.last else {
                 fatalError("Missing database in connection string")
             }
             
@@ -86,17 +86,25 @@ public class Connection: SQL.Connection {
                 host: host,
                 database: database,
                 port: port,
-                user: URL.user,
+                user: URL.user ?? "root",
                 password: URL.password
             )
         }
         
-        public convenience required init(extendedGraphemeClusterLiteral value: String) {
-            self.init(stringLiteral: value)
+        public required convenience init(stringLiteral: String) {
+            self.init(connectionString: stringLiteral)
+        }
+        
+        public required convenience init(extendedGraphemeClusterLiteral value: String) {
+            self.init(connectionString: value)
         }
         
         public required convenience init(unicodeScalarLiteral value: String) {
-            self.init(stringLiteral: value)
+            self.init(connectionString: value)
+        }
+        
+        public var description: String {
+            return connectionString
         }
     }
     
