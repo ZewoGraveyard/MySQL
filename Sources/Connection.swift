@@ -27,8 +27,8 @@ public class Connection: SQL.Connection {
             public init(rawValue: UInt) { self.rawValue = rawValue }
             
             static let None = 0
-            
-            static let CanHandleExpiredPasswords = CLIENT_CAN_HANDLE_EXPIRED_PASSWORDS
+        
+            // TODO: Version specific options
             static let Compress = CLIENT_COMPRESS
             static let FoundRows = CLIENT_FOUND_ROWS
             static let IgnoreSigPipe = CLIENT_IGNORE_SIGPIPE
@@ -61,7 +61,7 @@ public class Connection: SQL.Connection {
             return "mysql://\(userInfo)\(host):\(port)/\(database)"
         }
         
-        public init(host: String, database: String, port: UInt = 3306, user: String? = nil, password: String? = nil, flags: Flags = Flags(rawValue: 0)) {
+        public init(host: String, database: String, port: UInt = UInt(MYSQL_PORT), user: String? = nil, password: String? = nil, flags: Flags = Flags(rawValue: 0)) {
             self.flags = flags
             super.init(host: host, database: database, port: port, user: user, password: password)
         }
