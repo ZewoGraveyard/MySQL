@@ -8,6 +8,7 @@
 
 import CMySQL
 import SQL
+import Foundation
 
 public class Connection: SQL.Connection {
     
@@ -20,7 +21,7 @@ public class Connection: SQL.Connection {
         case OK
     }
     
-    public class Info: SQL.ConnectionInfo, ConnectionStringConvertible {
+    public class Info: SQL.ConnectionInfo, StringLiteralConvertible {
         
         public struct Flags : OptionSetType {
             public let rawValue: UInt
@@ -65,23 +66,38 @@ public class Connection: SQL.Connection {
             self.flags = flags
             super.init(host: host, database: database, port: port, user: user, password: password)
         }
-
-        required convenience public init(unicodeScalarLiteral value: String) {
-            fatalError("init(unicodeScalarLiteral:) has not been implemented")
-        }
-
-        required convenience public init(stringLiteral: String) {
-            fatalError("init(stringLiteral:) has not been implemented")
-        }
-
-        required convenience public init(connectionString: String) {
-            fatalError("init(connectionString:) has not been implemented")
-        }
-
-        required convenience public init(extendedGraphemeClusterLiteral value: String) {
-            fatalError("init(extendedGraphemeClusterLiteral:) has not been implemented")
+        
+        public convenience required init(stringLiteral: String) {
+            guard let URL = NSURL(string: stringLiteral) else {
+                fatalError("Invalid connection string")
+            }
+            
+            guard let host = URL.host else {
+                fatalError("Missing host in connection string")
+            }
+            
+            guard let database = URL.path else {
+                fatalError("Missing database in connection string")
+            }
+            
+            let port = URL.port?.unsignedIntegerValue ?? UInt(MYSQL_PORT)
+            
+            self.init(
+                host: host,
+                database: database,
+                port: port,
+                user: URL.user,
+                password: URL.password
+            )
         }
         
+        public convenience required init(extendedGraphemeClusterLiteral value: String) {
+            self.init(stringLiteral: value)
+        }
+        
+        public required convenience init(unicodeScalarLiteral value: String) {
+            self.init(stringLiteral: value)
+        }
     }
     
     private let connection: UnsafeMutablePointer<MYSQL>
