@@ -33,7 +33,7 @@ class MySQLTests: XCTestCase {
             print(result.fields)
             
             for row in result {
-                print(row["name"]?.description)
+                print(row["id"]?.integer)
             }
         }
         catch {
