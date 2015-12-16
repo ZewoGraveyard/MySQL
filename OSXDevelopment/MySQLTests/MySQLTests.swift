@@ -28,7 +28,12 @@ class MySQLTests: XCTestCase {
         do {
             try connection.open()
             
-            let result = try connection.execute("SELECT * FROM user")
+            let result = try connection.execute(
+                "SELECT * FROM user where id = :id",
+                parameters:  [
+                    "id": 1
+                ]
+            )
             
             print(result.fields)
             

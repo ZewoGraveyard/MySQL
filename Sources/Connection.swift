@@ -15,6 +15,7 @@ public class Connection: SQL.Connection {
     public enum Error: ErrorType {
         case ErrorCode(UInt, String)
         case BadResult
+        case ParameterError(String)
     }
     
     public enum Status {
@@ -144,8 +145,37 @@ public class Connection: SQL.Connection {
         mysql_close(connection)
     }
     
-    public func execute(string: String) throws -> Result {
-        guard mysql_real_query(connection, string, UInt(string.utf8.count)) == 0 else {
+    public func execute(string: String, parameters: [String: CustomStringConvertible]) throws -> Result {
+        
+        var statement = string
+        
+        for (key, value) in parameters {
+            
+            try value.description.withCString {
+                cstr in
+                
+                let escapedPointer = UnsafeMutablePointer<Int8>.alloc(value.description.characters.count)
+                
+                defer {
+                    escapedPointer.destroy()
+                    escapedPointer.dealloc(value.description.characters.count)
+                }
+                
+                let len = mysql_real_escape_string(connection, escapedPointer, cstr, strlen(cstr))
+                escapedPointer[Int(len)] = 0
+                
+                guard let escapedString = String.fromCString(escapedPointer) else {
+                    throw Error.ParameterError(key)
+                }
+                
+                statement = statement.stringByReplacingOccurrencesOfString(
+                    ":\(key)",
+                    withString: "\'\(escapedString)\'"
+                )
+            }
+        }
+        
+        guard mysql_real_query(connection, statement, UInt(statement.utf8.count)) == 0 else {
             throw statusError
         }
         
