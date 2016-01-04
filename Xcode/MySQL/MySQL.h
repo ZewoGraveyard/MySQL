@@ -2,8 +2,8 @@
 //  MySQL.h
 //  MySQL
 //
-//  Created by David Ask on 10/12/15.
-//  Copyright © 2015 Formbound. All rights reserved.
+//  Created by David Ask on 03/01/16.
+//  Copyright © 2016 Zewo. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>

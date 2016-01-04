@@ -8,7 +8,7 @@
 
 import CMySQL
 import SQL
-import Foundation
+import Core
 
 public class Connection: SQL.Connection {
     
@@ -68,27 +68,23 @@ public class Connection: SQL.Connection {
             super.init(host: host, database: database, port: port, user: user, password: password)
         }
         
-        public convenience required init(connectionString: String) {
-            guard let URL = NSURL(string: connectionString) else {
-                fatalError("Invalid connection string")
-            }
+        public required convenience init(connectionString: String) {
+            let uri = URI(string: connectionString)
             
-            guard let host = URL.host else {
+            guard let host = uri.host else {
                 fatalError("Missing host in connection string")
             }
             
-            guard let database = URL.pathComponents?.last else {
+            guard let database = uri.path?.splitBy("/").last else {
                 fatalError("Missing database in connection string")
             }
-            
-            let port = URL.port?.unsignedIntegerValue ?? UInt(MYSQL_PORT)
             
             self.init(
                 host: host,
                 database: database,
-                port: port,
-                user: URL.user ?? "root",
-                password: URL.password
+                port: UInt(uri.port ?? 3306),
+                user: uri.userInfo?.username,
+                password: uri.userInfo?.password
             )
         }
         
@@ -145,35 +141,47 @@ public class Connection: SQL.Connection {
         mysql_close(connection)
     }
     
-    public func execute(string: String, parameters: [String: CustomStringConvertible]) throws -> Result {
+    public func execute(string: String, parameters: [SQLParameterConvertible]) throws -> Result {
         
         var statement = string
         
-        for (key, value) in parameters {
+        for (i, value) in parameters.enumerate() {
+            let parameterIdentifier = "$\(i + 1)"
             
-            try value.description.withCString {
-                cstr in
-                
-                let escapedPointer = UnsafeMutablePointer<Int8>.alloc(value.description.characters.count)
-                
-                defer {
-                    escapedPointer.destroy()
-                    escapedPointer.dealloc(value.description.characters.count)
-                }
-                
-                let len = mysql_real_escape_string(connection, escapedPointer, cstr, strlen(cstr))
-                escapedPointer[Int(len)] = 0
-                
-                guard let escapedString = String.fromCString(escapedPointer) else {
-                    throw Error.ParameterError(key)
-                }
-                
-                statement = statement.stringByReplacingOccurrencesOfString(
-                    ":\(key)",
-                    withString: "\'\(escapedString)\'"
-                )
+            let data: Data
+            
+            switch value.SQLParameterData {
+            case .Binary(let uBytes):
+                data = Data(uBytes: uBytes)
+                break
+            case .Text(let string):
+                data = Data(string: string)
+                break
             }
+            
+            guard let string = data.string else {
+                throw Error.ParameterError("Failed to convert parameter \(parameterIdentifier) to string")
+            }
+            
+            let escapedPointer = UnsafeMutablePointer<Int8>.alloc(data.length)
+            
+            defer {
+                escapedPointer.destroy()
+                escapedPointer.dealloc(data.length)
+            }
+            
+            let len = mysql_real_escape_string(connection, escapedPointer, string, strlen(string))
+            escapedPointer[Int(len)] = 0
+            
+            guard let escapedString = String.fromCString(escapedPointer) else {
+                throw Error.ParameterError("Failed to escape parameter \(parameterIdentifier)")
+            }
+            
+            statement = statement.stringByReplacingOccurrencesOfString(parameterIdentifier, withString: "'\(escapedString)'")
+            
         }
+        
+        print(statement)
         
         guard mysql_real_query(connection, statement, UInt(statement.utf8.count)) == 0 else {
             throw statusError

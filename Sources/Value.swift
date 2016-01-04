@@ -10,9 +10,9 @@ import SQL
 
 public struct Value: SQL.Value  {
     
-    public let data: [UInt8]
+    public let data: Data
     
-    public init(data: [UInt8]) {
+    public init(data: Data) {
         self.data = data
     }
 }

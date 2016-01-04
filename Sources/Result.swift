@@ -51,7 +51,7 @@ public class Result: SQL.Result {
             
             memcpy(&buffer, val, length)
             
-            result[field.name] = Value(data: buffer)
+            result[field.name] = Value(data: Data(uBytes: buffer))
         }
         
         return Row(valuesByName: result)

@@ -2,13 +2,15 @@
 //  MySQLTests.swift
 //  MySQLTests
 //
-//  Created by David Ask on 10/12/15.
-//  Copyright © 2015 Formbound. All rights reserved.
+//  Created by David Ask on 03/01/16.
+//  Copyright © 2016 Zewo. All rights reserved.
 //
 
 import XCTest
+import CMySQL
 import MySQL
 import SQL
+
 
 class MySQLTests: XCTestCase {
     
@@ -23,27 +25,20 @@ class MySQLTests: XCTestCase {
     }
     
     func testExample() {
-        let connection = Connection("mysql://localhost/test")
+        let connection = Connection("mysql://root@localhost/test")
         
         do {
             try connection.open()
             
-            let result = try connection.execute(
-                "SELECT * FROM user where id = :id",
-                parameters:  [
-                    "id": 1
-                ]
-            )
-            
-            print(result.fields)
+            let result = try connection.execute("select * from user where id = $2", parameters: 1)
             
             for row in result {
-                print(row["id"]?.integer)
+                print(row)
             }
         }
         catch {
             print(error)
-            print("!")
+            print("Error")
         }
     }
     
