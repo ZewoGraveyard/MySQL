@@ -28,7 +28,4 @@ xcuserdata
 *.moved-aside
 *.xcuserstate
 *.xcscmblueprint
-
-.DS_Store
-.vagrant/
-Vagrantfile
+XcodeDevelopment/
