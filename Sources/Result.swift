@@ -42,12 +42,12 @@ public class Result: SQL.Result {
         
         let lengths = mysql_fetch_lengths(resultPointer)
         
-        for (fieldIndex, field) in fields.enumerate() {
+        for (fieldIndex, field) in fields.enumerated() {
 
             let val = row[fieldIndex]
             let length = Int(lengths[fieldIndex])
             
-            var buffer = [UInt8](count: length, repeatedValue: 0)
+            var buffer = [UInt8](repeating: 0, count: length)
             
             memcpy(&buffer, val, length)
             

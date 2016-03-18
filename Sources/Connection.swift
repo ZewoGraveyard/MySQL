@@ -12,7 +12,7 @@ import Core
 
 public class Connection: SQL.Connection {
     
-    public enum Error: ErrorType {
+    public enum Error: ErrorProtocol {
         case ErrorCode(UInt, String)
         case BadResult
         case ParameterError(String)
@@ -24,7 +24,7 @@ public class Connection: SQL.Connection {
     
     public class Info: SQL.ConnectionInfo, ConnectionStringConvertible {
         
-        public struct Flags : OptionSetType {
+        public struct Flags : OptionSet {
             public let rawValue: UInt
             public init(rawValue: UInt) { self.rawValue = rawValue }
             
@@ -145,7 +145,7 @@ public class Connection: SQL.Connection {
         
         var statement = string
         
-        for (i, value) in parameters.enumerate() {
+        for (i, value) in parameters.enumerated() {
             let parameterIdentifier = "$\(i + 1)"
             
             let data: Data
@@ -163,17 +163,17 @@ public class Connection: SQL.Connection {
                 throw Error.ParameterError("Failed to convert parameter \(parameterIdentifier) to string")
             }
             
-            let escapedPointer = UnsafeMutablePointer<Int8>.alloc(data.length)
+            let escapedPointer = UnsafeMutablePointer<Int8>(allocatingCapacity: data.length)
             
             defer {
                 escapedPointer.destroy()
-                escapedPointer.dealloc(data.length)
+                escapedPointer.deallocateCapacity(data.length)
             }
             
             let len = mysql_real_escape_string(connection, escapedPointer, string, strlen(string))
             escapedPointer[Int(len)] = 0
             
-            guard let escapedString = String.fromCString(escapedPointer) else {
+            guard let escapedString = String(validatingUTF8: escapedPointer) else {
                 throw Error.ParameterError("Failed to escape parameter \(parameterIdentifier)")
             }
             
@@ -215,7 +215,7 @@ public class Connection: SQL.Connection {
     private var statusError: Error {
         return Error.ErrorCode(
             UInt(mysql_errno(connection)),
-            String.fromCString(mysql_error(connection)) ?? "None"
+            String(validatingUTF8: mysql_error(connection)) ?? "None"
         )
     }
 }

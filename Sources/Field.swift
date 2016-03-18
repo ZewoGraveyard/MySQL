@@ -28,13 +28,13 @@ public struct Field: SQL.Field {
     public var maxLength: UInt
     
     public init(_ pointer: UnsafePointer<MYSQL_FIELD>) {
-        name = String.fromCString(pointer.memory.name)!
-        originalName = String.fromCString(pointer.memory.org_name)!
-        table = String.fromCString(pointer.memory.table)!
-        originalTable = String.fromCString(pointer.memory.org_table)!
-        database = String.fromCString(pointer.memory.db)!
-        catalog = String.fromCString(pointer.memory.catalog)!
-        length = pointer.memory.length
-        maxLength = pointer.memory.max_length
+        name = String(validatingUTF8: pointer.pointee.name)!
+        originalName = String(validatingUTF8: pointer.pointee.org_name)!
+        table = String(validatingUTF8: pointer.pointee.table)!
+        originalTable = String(validatingUTF8: pointer.pointee.org_table)!
+        database = String(validatingUTF8: pointer.pointee.db)!
+        catalog = String(validatingUTF8: pointer.pointee.catalog)!
+        length = pointer.pointee.length
+        maxLength = pointer.pointee.max_length
     }
 }
